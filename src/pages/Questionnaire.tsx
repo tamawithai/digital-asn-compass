@@ -24,7 +24,8 @@ const Questionnaire = () => {
 
   const currentQuestion = shuffledQuestions[currentQuestionIndex];
   const currentArea = currentQuestion?.area || 1;
-  const progress = ((currentQuestionIndex + 1) / shuffledQuestions.length) * 100;
+  // --- PERUBAHAN LOGIKA PROGRESS ---
+  const progress = (currentQuestionIndex / shuffledQuestions.length) * 100;
 
   // Auto-save to localStorage
   useEffect(() => {
@@ -36,7 +37,7 @@ const Questionnaire = () => {
   useEffect(() => {
     const savedAnswers = localStorage.getItem("questionnaire-answers");
     const savedProgress = localStorage.getItem("questionnaire-progress");
-    
+
     if (savedAnswers) {
       setAnswers(JSON.parse(savedAnswers));
     }
@@ -85,13 +86,17 @@ const Questionnaire = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header showLogin={false} />
-      
+      <Header />
+
       <div className="container max-w-4xl py-8">
         {/* Progress Section */}
         <div className="mb-8 space-y-4">
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Pertanyaan {currentQuestionIndex + 1} dari {shuffledQuestions.length}</span>
+            {/* --- PENAMBAHAN PERSENTASE TEKS --- */}
+            <div className="flex items-center gap-2">
+              <span>Pertanyaan {currentQuestionIndex + 1} dari {shuffledQuestions.length}</span>
+              <span className="font-medium text-primary">({Math.round(progress)}%)</span>
+            </div>
             <span>Area {currentArea}: {currentQuestion.areaName}</span>
           </div>
           <Progress value={progress} className="h-2" />

@@ -2,24 +2,21 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { SimpleRadarChart } from "@/components/SimpleRadarChart";
 import { calculateScore } from "@/utils/scoring";
-import { QuestionnaireData, AssessmentResult, areaNames } from "@/data/questions";
+import { QuestionnaireData, AssessmentResult } from "@/data/questions";
 import { 
   Download, 
   Share2, 
-  Award, 
   TrendingUp, 
   Users,
   PenTool,
   Shield,
   Settings,
-  Search,
-  LogOut
+  Search
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -39,8 +36,9 @@ const Results = () => {
     const calculatedResult = calculateScore(answers);
     setResult(calculatedResult);
 
-    // Show confetti for 2 seconds
-    setTimeout(() => setShowConfetti(false), 2000);
+    // Hentikan efek confetti setelah 2 detik
+    const timer = setTimeout(() => setShowConfetti(false), 2000);
+    return () => clearTimeout(timer);
   }, [navigate]);
 
   const handlePrintPDF = () => {
@@ -52,15 +50,16 @@ const Results = () => {
   };
 
   const handleShare = (platform: string) => {
-    const shareText = `Saya baru saja menyelesaikan asesmen literasi digital dengan skor ${result?.totalIndex}/100! 🚀 Tingkatkan kompetensi digital Anda juga di Portal Indeks Literasi Digital ASN.`;
+    const shareText = `Saya baru saja menyelesaikan asesmen literasi digital dengan skor ${result?.totalIndex}/100! 🚀 Tingkatkan kompetensi digital Anda juga di Portal Asesmen Literasi Digital.`;
     const shareUrl = window.location.origin;
 
+    let url = "";
     switch (platform) {
       case "whatsapp":
-        window.open(`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`);
+        url = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
         break;
       case "facebook":
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`);
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
         break;
       case "instagram":
         navigator.clipboard.writeText(shareText + " " + shareUrl);
@@ -68,14 +67,11 @@ const Results = () => {
           title: "Teks Disalin",
           description: "Teks untuk berbagi telah disalin ke clipboard. Silakan paste di Instagram Anda.",
         });
-        break;
+        return;
     }
+    window.open(url, '_blank');
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/");
-  };
 
   if (!result) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -120,63 +116,48 @@ const Results = () => {
       {/* Confetti Effect */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50">
-          <div className="confetti-container">
-            {[...Array(50)].map((_, i) => (
-              <div
-                key={i}
-                className="confetti"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 3}s`,
-                  backgroundColor: `hsl(${Math.random() * 360}, 70%, 60%)`
-                }}
-              />
-            ))}
-          </div>
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              className="w-2.5 h-2.5 rounded-full absolute animate-confetti-fall"
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                backgroundColor: `hsl(${Math.random() * 360}, 70%, 60%)`
+              }}
+            />
+          ))}
         </div>
       )}
 
-      <Header showLogin={false} />
-      
+      <Header />
+
       <div className="container max-w-6xl py-8 space-y-8">
-        {/* Header Section */}
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-between">
-            <div></div>
-            <Button variant="outline" onClick={handleLogout} className="gap-2">
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-          <div className="animate-fade-in">
-            <h1 className="text-3xl lg:text-4xl font-bold mb-4">
-              🎉 Selamat! Asesmen Anda Telah Selesai
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Berikut adalah hasil analisis kompetensi literasi digital Anda
-            </p>
-          </div>
+        <div className="text-center space-y-4 animate-fade-in">
+          <h1 className="text-3xl lg:text-4xl font-bold mb-4">
+            🎉 Selamat! Asesmen Anda Telah Selesai
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Berikut adalah hasil analisis kompetensi literasi digital Anda
+          </p>
         </div>
 
-        {/* Radar Chart */}
         <Card className="p-8 shadow-medium animate-slide-up">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-semibold mb-2">Visualisasi Kompetensi Digital</h2>
             <p className="text-muted-foreground">Radar chart menunjukkan profil kompetensi Anda di 5 area</p>
           </div>
-          
           <SimpleRadarChart data={radarData} />
         </Card>
 
-        {/* Summary Section */}
         <Card className="p-8 shadow-medium animate-slide-up" style={{ animationDelay: '200ms' }}>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 items-center justify-center">
             <div className="text-center space-y-2">
               <div className="text-4xl font-bold text-primary">{result.totalIndex}</div>
               <div className="text-sm text-muted-foreground">Indeks Total</div>
               <div className="text-xs text-muted-foreground">dari 100 poin</div>
             </div>
-            
+
             <div className="text-center space-y-2">
               <Badge className={`text-lg px-4 py-2 ${getCompetencyColor(result.competencyLevel)}`}>
                 {result.competencyLevel}
@@ -184,54 +165,42 @@ const Results = () => {
               <div className="text-sm text-muted-foreground">Level Kompetensi</div>
               <div className="text-xs text-muted-foreground">berdasarkan skor total</div>
             </div>
-            
-            <div className="text-center space-y-2">
-              <Award className="h-8 w-8 text-primary mx-auto" />
-              <div className="text-sm font-medium">Sertifikat Digital</div>
-              <div className="text-xs text-muted-foreground">tersedia untuk diunduh</div>
-            </div>
           </div>
         </Card>
 
-        {/* Detailed Analysis */}
         <Card className="p-8 shadow-medium animate-slide-up" style={{ animationDelay: '400ms' }}>
-          <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="details">Analisis Detail</TabsTrigger>
-              <TabsTrigger value="recommendations">Saran Pengembangan</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="details" className="space-y-6">
-              <h3 className="text-xl font-semibold">Skor per Area Kompetensi</h3>
-              
-              {Object.entries(result.areaScores).map(([key, score]) => {
-                const areaIndex = parseInt(key.replace('area', ''));
-                const areaName = getAreaName(areaIndex);
-                const Icon = getAreaIcon(areaIndex);
-                
-                return (
-                  <div key={key} className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-primary/10">
-                        <Icon className="h-5 w-5 text-primary" />
+          <div className="space-y-8">
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Analisis Detail</h3>
+              <div className="space-y-4">
+                {Object.entries(result.areaScores).map(([key, score]) => {
+                  const areaIndex = parseInt(key.replace('area', ''));
+                  const areaName = getAreaName(areaIndex);
+                  const Icon = getAreaIcon(areaIndex);
+
+                  return (
+                    <div key={key} className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-primary/10">
+                          <Icon className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-medium">{areaName}</div>
+                          <div className="text-sm text-muted-foreground">Area {areaIndex}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-medium">{areaName}</div>
-                        <div className="text-sm text-muted-foreground">Area {areaIndex}</div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary">{score}</div>
+                        <div className="text-sm text-muted-foreground">dari 100</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-primary">{score}</div>
-                      <div className="text-sm text-muted-foreground">dari 100</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </TabsContent>
-            
-            <TabsContent value="recommendations" className="space-y-4">
-              <h3 className="text-xl font-semibold">Rekomendasi Pengembangan</h3>
-              
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Saran Pengembangan</h3>
               <div className="space-y-4">
                 {result.recommendations.map((recommendation, index) => (
                   <div key={index} className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
@@ -240,18 +209,17 @@ const Results = () => {
                   </div>
                 ))}
               </div>
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
         </Card>
 
-        {/* Action Buttons */}
         <Card className="p-6 shadow-medium animate-slide-up" style={{ animationDelay: '600ms' }}>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button onClick={handlePrintPDF} className="gap-2" size="lg">
               <Download className="h-4 w-4" />
               Cetak ke PDF
             </Button>
-            
+
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
@@ -285,20 +253,6 @@ const Results = () => {
       <Footer />
 
       <style>{`
-        .confetti-container {
-          position: relative;
-          width: 100%;
-          height: 100%;
-        }
-        
-        .confetti {
-          position: absolute;
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          animation: confetti-fall 3s linear infinite;
-        }
-        
         @keyframes confetti-fall {
           0% {
             transform: translateY(-100vh) rotate(0deg);
@@ -309,10 +263,20 @@ const Results = () => {
             opacity: 0;
           }
         }
-        
+        .animate-confetti-fall {
+            animation: confetti-fall 3s linear infinite;
+        }
         @media print {
           .no-print {
             display: none !important;
+          }
+          @page {
+            size: A4 landscape;
+            margin: 0;
+          }
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
         }
       `}</style>
