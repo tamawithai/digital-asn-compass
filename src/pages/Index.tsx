@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CompetencyCard } from "@/components/CompetencyCard";
+import { useAuth } from "@/contexts/AuthContext"; // <-- IMPORT INI
 import { 
   Search, 
   Users, 
@@ -44,18 +45,16 @@ const competencies = [
 ];
 
 const Index = () => {
-  const handleStartAssessment = () => {
-    window.location.href = "/questionnaire";
-  };
+  const { login } = useAuth(); // <-- GUNAKAN AUTH CONTEXT
 
-  const handleLogin = () => {
-    window.location.href = "/questionnaire";
+  const handleStartAssessment = () => {
+    login(); // <-- PANGGIL FUNGSI LOGIN
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <Header onLoginClick={handleLogin} />
-      
+      <Header />
+
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-br from-background via-muted/20 to-primary/5">
         <div className="container">
@@ -75,7 +74,7 @@ const Index = () => {
                   Anda
                 </h1>
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                  Portal asesmen literasi digital yang komprehensif untuk Aparatur Sipil Negara. 
+                  Portal asesmen literasi digital, untuk Anda yang ingin mengetahui kompetensi literasi digital secara komprehensif. 
                   Dapatkan analisis mendalam dan rekomendasi pengembangan yang dipersonalisasi 
                   berdasarkan 5 area kompetensi DigComp 2.2.
                 </p>
@@ -85,7 +84,7 @@ const Index = () => {
                 <Button 
                   variant="hero" 
                   size="lg" 
-                  onClick={handleStartAssessment}
+                  onClick={handleStartAssessment} // Tetap sama, tapi fungsinya beda
                   className="group"
                 >
                   Mulai Asesmen Sekarang
@@ -139,8 +138,8 @@ const Index = () => {
               5 Area Kompetensi Digital
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Berdasarkan framework DigComp 2.2 dari Uni Eropa, asesmen ini mengukur 
-              kompetensi digital Anda secara komprehensif
+              Mengadaptasi dari framework DigComp 2.2 dari Uni Eropa, asesmen ini mengukur 
+              kompetensi literasi digital Anda secara komprehensif
             </p>
           </div>
 
@@ -167,12 +166,12 @@ const Index = () => {
           <p className="text-xl opacity-90 max-w-2xl mx-auto">
             Asesmen ini memakan waktu sekitar 10-15 menit. Hasil yang Anda dapatkan 
             akan memberikan insight mendalam tentang kekuatan dan area pengembangan 
-            kompetensi digital Anda.
+            kompetensi literasi digital Anda.
           </p>
           <Button 
             variant="secondary" 
             size="lg" 
-            onClick={handleStartAssessment}
+            onClick={handleStartAssessment} // <-- Tombol kedua yang diperbaiki
             className="text-lg px-8 py-6 shadow-large hover:shadow-xl"
           >
             Mulai Asesmen Gratis
