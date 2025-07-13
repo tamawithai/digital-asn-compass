@@ -45,13 +45,11 @@ const competencies = [
 
 const Index = () => {
   const handleStartAssessment = () => {
-    // TODO: Navigate to login page
-    console.log("Starting assessment...");
+    window.location.href = "/questionnaire";
   };
 
   const handleLogin = () => {
-    // TODO: Implement Google SSO
-    console.log("Login clicked...");
+    window.location.href = "/questionnaire";
   };
 
   return (
