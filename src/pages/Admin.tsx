@@ -8,22 +8,25 @@ import { Settings, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const Admin = () => {
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
 
+  // Ambil kredensial dari environment variables
+  const adminUsername = import.meta.env.VITE_ADMIN_USERNAME;
+  const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+
   const handleLogin = () => {
-    // Simple password check - in production this should be more secure
-    if (password === "admin123") {
+    if (username === adminUsername && password === adminPassword) {
       setIsAuthenticated(true);
-      // Load current Google Sheet URL
       const savedUrl = localStorage.getItem("google-sheet-url");
       if (savedUrl) setGoogleSheetUrl(savedUrl);
     } else {
       toast({
-        title: "Password Salah",
-        description: "Silakan masukkan password yang benar.",
-        variant: "destructive"
+        title: "Login Gagal",
+        description: "Username atau password salah.",
+        variant: "destructive",
       });
     }
   };
@@ -32,7 +35,7 @@ const Admin = () => {
     localStorage.setItem("google-sheet-url", googleSheetUrl);
     toast({
       title: "Konfigurasi Berhasil Disimpan",
-      description: "URL Google Sheet telah diperbarui."
+      description: "URL Google Sheet telah diperbarui.",
     });
   };
 
@@ -47,7 +50,17 @@ const Admin = () => {
               <h1 className="text-2xl font-bold">Akses Admin</h1>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="password">Password Admin</Label>
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
                     type="password"
@@ -74,7 +87,6 @@ const Admin = () => {
         <Card className="p-8 shadow-medium">
           <div className="space-y-6">
             <h1 className="text-2xl font-bold">Konfigurasi Sistem</h1>
-            
             <div className="space-y-4">
               <div>
                 <Label htmlFor="sheet-url">URL Google Sheet Tujuan</Label>
@@ -88,7 +100,6 @@ const Admin = () => {
                   Masukkan URL Google Sheet yang akan digunakan untuk menyimpan data hasil asesmen.
                 </p>
               </div>
-              
               <Button onClick={handleSave} className="gap-2">
                 <Save className="h-4 w-4" />
                 Simpan
