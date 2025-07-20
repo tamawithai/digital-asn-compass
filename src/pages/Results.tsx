@@ -8,10 +8,11 @@ import { Footer } from "@/components/Footer";
 import { SimpleRadarChart } from "@/components/SimpleRadarChart";
 import { calculateScore } from "@/utils/scoring";
 import { QuestionnaireData, AssessmentResult } from "@/data/questions";
-import { 
-  Download, 
-  Share2, 
-  TrendingUp, 
+import { useAuth } from "@/contexts/AuthContext"; // <-- Tambahkan import ini
+import {
+  Download,
+  Share2,
+  TrendingUp,
   Users,
   PenTool,
   Shield,
@@ -22,8 +23,47 @@ import { toast } from "@/hooks/use-toast";
 
 const Results = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // <-- Dapatkan data pengguna
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [showConfetti, setShowConfetti] = useState(true);
+
+  // --- FUNGSI BARU UNTUK MENGIRIM DATA ---
+  const sendDataToGoogleSheet = async (assessmentResult: AssessmentResult) => {
+    const scriptUrl = localStorage.getItem("google-sheet-url");
+    if (!scriptUrl) {
+      console.error("Google Apps Script URL not found in localStorage.");
+      return; // Jangan lakukan apa-apa jika URL tidak ada
+    }
+
+    // Siapkan data yang akan dikirim
+    const payload = {
+      userId: user?.uid || 'N/A',
+      userName: user?.displayName || 'N/A',
+      userEmail: user?.email || 'N/A',
+      totalIndex: assessmentResult.totalIndex,
+      areaScores: assessmentResult.areaScores
+    };
+
+    try {
+      const response = await fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors', // Penting untuk menghindari error CORS
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      console.log("Data sent successfully to Google Sheet.");
+    } catch (error) {
+      console.error("Error sending data to Google Sheet:", error);
+      toast({
+        title: "Gagal Menyimpan ke Sheet",
+        description: "Terjadi kesalahan saat mengirim data ke Google Sheet.",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   useEffect(() => {
     const savedAnswers = localStorage.getItem("final-answers");
@@ -35,11 +75,15 @@ const Results = () => {
     const answers: QuestionnaireData = JSON.parse(savedAnswers);
     const calculatedResult = calculateScore(answers);
     setResult(calculatedResult);
-
-    // Hentikan efek confetti setelah 2 detik
+    
+    // --- PANGGIL FUNGSI PENGIRIMAN DATA ---
+    if (user) { // Pastikan data pengguna sudah ada sebelum mengirim
+      sendDataToGoogleSheet(calculatedResult);
+    }
+    
     const timer = setTimeout(() => setShowConfetti(false), 2000);
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, user]); // Tambahkan user sebagai dependency
 
   const handlePrintPDF = () => {
     window.print();
@@ -103,7 +147,7 @@ const Results = () => {
   const getAreaName = (areaIndex: number): string => {
     const names: { [key: number]: string } = {
       1: "Information & Data Literacy",
-      2: "Communication & Collaboration", 
+      2: "Communication & Collaboration",
       3: "Digital Content Creation",
       4: "Safety",
       5: "Problem Solving"
@@ -221,24 +265,24 @@ const Results = () => {
             </Button>
 
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => handleShare("whatsapp")}
                 className="gap-2"
               >
                 <Share2 className="h-4 w-4" />
                 WhatsApp
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => handleShare("facebook")}
                 className="gap-2"
               >
                 <Share2 className="h-4 w-4" />
                 Facebook
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => handleShare("instagram")}
                 className="gap-2"
               >
