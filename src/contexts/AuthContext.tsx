@@ -11,12 +11,18 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
+import { auth, googleProvider, db } from "@/lib/firebase"; // <-- Tambahkan db
+import { doc, getDoc } from "firebase/firestore"; // <-- Tambahkan ini
 import { useNavigate } from "react-router-dom";
+
+// Tipe untuk data pengguna kustom kita
+interface AppUser extends User {
+  isAdmin?: boolean;
+}
 
 // Tipe untuk nilai yang akan disediakan oleh context
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   isLoading: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
@@ -27,14 +33,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Komponen Provider yang akan "membungkus" aplikasi kita
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Listener ini akan memantau perubahan status login dari Firebase
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        // Jika ada pengguna, periksa perannya di Firestore
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        const userData: AppUser = {
+          ...currentUser,
+          isAdmin: userDoc.exists() && userDoc.data().role === "admin",
+        };
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
       setIsLoading(false);
     });
 
@@ -44,9 +62,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-      // Arahkan ke halaman kuesioner setelah berhasil login
-      navigate("/questionnaire");
+      const result = await signInWithPopup(auth, googleProvider);
+      const loggedInUser = result.user;
+
+      // Setelah login, periksa apakah dia admin
+      const userDocRef = doc(db, "users", loggedInUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists() && userDoc.data().role === "admin") {
+        // Jika admin, arahkan ke dashboard admin
+        navigate("/admin");
+      } else {
+        // Jika bukan, arahkan ke kuesioner
+        navigate("/questionnaire");
+      }
     } catch (error) {
       console.error("Error during Google sign-in:", error);
     }
