@@ -35,15 +35,18 @@ const Admin = () => {
             <h1 className="text-2xl font-bold">Konfigurasi Sistem</h1>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="sheet-url">URL Google Sheet Tujuan</Label>
+                <Label htmlFor="sheet-url">
+                  URL Google Apps Script (Web App)
+                </Label>
                 <Input
                   id="sheet-url"
                   value={googleSheetUrl}
                   onChange={(e) => setGoogleSheetUrl(e.target.value)}
-                  placeholder="https://docs.google.com/spreadsheets/d/..."
+                  placeholder="https://script.google.com/macros/s/..."
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  Masukkan URL Google Sheet yang akan digunakan untuk menyimpan data hasil asesmen.
+                  Masukkan URL Google Sheet yang akan digunakan untuk menyimpan
+                  data hasil asesmen.
                 </p>
               </div>
               <Button onClick={handleSave} className="gap-2">
